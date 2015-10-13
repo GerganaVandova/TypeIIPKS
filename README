@@ -1,0 +1,305 @@
+I. BLAST STEP
+
+Blast 3 CLFs, 3 KSs, 76 ACPs (refset) + 3 FAS ACPs + Aur ACP,
+ 16 KRs, 7 ATs, 3 KSIIIs, 3 CyclaseABDs, 17 CyclaseSRPBCCs,
+ 3 Cyclases, and 6 Cyclase_polyket against 10 databases
+ and parse blast results with e value < 1
+
+The blast queries are in Manual/
+
+1. Run ./run_blast.py (specify on line 49 which query sequences to blast against)
+If you want to run blast agains all domains, type
+blast_query_files = glob.glob("%s/*.seq" % blast_query_dir)
+
+2. Run make all
+
+    All files stored in TypeIIPKS/Blast/blast_results_seqs/ folder
+
+    2.1 Concatenate all parsed blast files into one: make concat
+    creates blast_results_seqs/blast_results.parsed.[domain].9f
+
+    2.2 Get nucleotide genbank IDs: make nuc_ids
+    creates gbs.[domain].1f
+
+    2.3 Get nucleotide genbank IDs that had a match in both KS and partner domain blast hits:
+    creates gbs.KS[partner domain].1f
+
+    2.4 Get KS and [partner domain] proteins that exist in gbs.KS[partner domain].1f: make ksclf_prots
+    creates blast_results.parsed.KS.9f.match.ks[partner domain]
+            blast_results.parsed.[partner domain].9f.match.ks[partner domain]
+
+    2. 5 Uniqify the proteins and remove dashes and asterisks and choose longest
+    synonym: make longest (have to rm output files of Step #2.4)
+    creates blast_results.parsed.KS.9f.match.ks[partner domain]
+            blast_results.parsed.KS.9f.synonyms
+            blast_results.parsed.KS.9f.longest_synonym
+            blast_results.parsed.[partner domain].9f.match.ks[partner domain]
+            blast_results.parsed.[partner domain].9f.synonyms
+            blast_results.parsed.[partner domain].9f.longest_synonym
+
+    2.6. Compare the Reference set to the found set: make compare
+    creates blast_results.parsed.[domain].9f.longest_synonym.compareErin
+
+    2.7.  Make fasta file of blast hit sequences to use in HMM search and clean the
+    names: make fasta
+    creates blast_results.KS.fasta
+            blast_results.[partner domain].fasta
+            blast_results.KS.fasta.cleanName
+            blast_results.[partner domain].fasta.cleanName
+
+    2.8. Remove unique sequences (cdhit cutoff = 0.99): make cdhit
+    creates blast_results.KS.[partner domain].fasta.cleanName.cdhit.99
+            blast_results.KS.[partner domain].fasta.cleanName.cdhit.99.clstr
+
+
+
+*******************************************************************************
+II. pHMM_train STEP
+
+1. Fasta input files for MSA are in FASTA/
+
+t2clf.selectKnown12.fasta
+t2ks.selectKnown12.fasta
+t2ACP.selectKnown12.fasta
+KR.C9.6.fasta
+KR.nonC9.6.fasta
+AT.7.fasta
+KSIII.10.fasta
+CyclaseABD.3.fasta
+CyclaseSRPBCC.17.fasta
+Cyclase.3.fasta
+Cyclase_polyket.6.fasta
+
+FASTA files for test KS and CLF HMMs:
+t2clf.C16.fasta
+t2ks.C16.fasta
+t2clf.C28.fasta
+t2ks.C28.fasta
+t2clf.antismash.Erin.60.fasta
+t2ks.antismash.Erin.60.fasta
+
+2. Run muscle to make MSA for all domains:
+
+muscle -in t2clf.selectKnown12.fasta    -out    t2clf.selectKnown12.fas     -maxiters 100
+muscle -in t2ks.selectKnown12.fasta     -out    t2ks.selectKnown12.fas      -maxiters 100
+muscle -in t2ACP.selectKnown12.fasta    -out    t2ACP.selectKnown12.fas     -maxiters 100
+muscle -in KR.C9.6.fasta                -out    KR.C9.6.fas                 -maxiters 100
+muscle -in KR.nonC9.fasta               -out    KR.nonC9.6.fas              -maxiters 100
+muscle -in AT.7.fasta                   -out    t2at.selectKnown7.fas       -maxiters 100
+muscle -in KSIII.10.fasta               -out    t2ksiii.selectKnown10.fas   -maxiters 100
+muscle -in CyclaseABD.3.fasta           -out    CyclaseABD.3.fas            -maxiters 100
+muscle -in CyclaseSRPBCC.17.fasta       -out    CyclaseSRPBCC.17.fas        -maxiters 100
+muscle -in Cyclase.3.fasta              -out    Cyclase.fasta.3.fas         -maxiters 100
+muscle -in Cyclase_polyket.6.fasta      -out    Cyclase_polyket.6.fas       -maxiters 100
+muscle -in t2clf.antismash.Erin.60.fasta     -out    t2clf.antismash.Erin.60.fas       -maxiters 100
+muscle -in t2ks.antismash.Erin.60.fasta      -out    t2ks.antismash.Erin.60.fas        -maxiters 100
+
+Store MSA files in MSA/
+
+t2clf.selectKnown12.fas
+t2ks.selectKnown12.fas
+t2ACP.selectKnown12.fas
+KR.C9.6.fas
+KR.nonC9.6.fas
+t2at.selectKnown7.fas
+t2ksiii.selectKnown10.fas
+CyclaseABD.3.fas
+CyclaseSRPBCC.17.fas
+Cyclase.3.fas
+Cyclase_polyket.6.fas
+
+MSA for test KS and CLF HMMs:
+t2clf.C16.fas
+t2ks.C16.fas
+t2clf.C28.fas
+t2ks.C28.fas
+t2clf.antismash.Erin.60.fas
+t2ks.antismash.Erin.60.fas
+
+3. Run hmmer to build HMMs for all domains:
+
+hmmbuild -n t2clf               --amino t2clf.selectKnown12.hmm             t2clf.selectKnown12.fas
+hmmbuild -n t2ks                --amino t2ks.selectKnown12.hmm              t2ks.selectKnown12.fas
+hmmbuild -n t2acp               --amino t2ACP.selectKnown12.hmm             t2ACP.selectKnown12.fas
+hmmbuild -n t2krc9              --amino KR.C9.6.hmm                         KR.C9.6.fas
+hmmbuild -n t2kr                --amino KR.nonC9.6.hmm                      KR.nonC9.6.fas
+hmmbuild -n t2at                --amino t2at.selectKnown7.hmm               t2at.selectKnown7.fas
+hmmbuild -n t2ksiii             --amino t2ksiii.selectKnown10.hmm           t2ksiii.selectKnown10.fas
+hmmbuild -n t2cyclaseABD        --amino t2cyclaseABD.selectKnown3.hmm       CyclaseABD.3.fas
+hmmbuild -n t2cyclaseSRPBCC     --amino t2cyclaseSRPBCC.selectKnown17.hmm   CyclaseSRPBCC.17.fas
+hmmbuild -n t2cyclase           --amino t2cyclase.selectKnown3.hmm          Cyclase.3.fas
+hmmbuild -n t2cyclase_polyket   --amino t2cyclase_polyket.selectKnown6.hmm  Cyclase_polyket.6.fas
+
+Store HMM files in HMM/
+
+t2ks.selectKnown12.hmm
+t2clf.selectKnown12.hmm
+t2ACP.selectKnown12.hmm
+KR.C9.6.hmm
+KR.nonC9.6.hmm
+t2at.selectKnown7.hmm
+t2ksiii.selectKnown10.hmm
+t2cyclaseABD.selectKnown3.hmm
+t2cyclaseSRPBCC.selectKnown17.hmm
+t2cyclase.selectKnown3.hmm
+t2cyclase_polyket.selectKnown6.hmm
+
+Test HMMs for KS and CLF:
+t2clf.C16.hmm
+t2clf.C28.hmm
+t2clf.Erin.60.hmm
+t2clf.antismash.26.hmm (downlowaded from antismash)
+t2ks.C16.hmm
+t2ks.C28.hmm
+t2ks.Erin.60.hmm
+t2ks.antismash.25.hmm (downloaded from antismash)
+
+
+4. Compare 5 pHMMs interms of how they score:
+    FastaTestSets/ :
+    1. A positive training set:
+        Type II KS (KS.30.fasta)
+        Type II CLF (CLF.30.fasta)
+    2. A negative training set:
+        Type I KS (TypeI.fasta)
+        FabF (FabH.fasta)
+        FabH (FabH.fasta)
+        Aurachin (Aur.fasta)
+   Set of HMMs tested (for now) in HMM/:
+    t2ks.Erin.60.hmm
+    t2ks.selectKnown12.hmm
+    t2ks.antismash.25.hmm
+    t2ks.C16.hmm
+    t2ks.C28.hmm
+
+t2ks.selectKnown12.hmm and t2clf.selectKnown12.hmm hmms chosen
+
+
+5. Choose cutoff by testing HMMs against positive and negative train sets
+
+5.1. Test sets in FastaTestSets/
+
+CLF.30.fasta
+KS.30.fasta
+FabF.fasta
+Aur.fasta
+TypeI.fasta
+
+ACP.76.fasta
+Aur.ACP.fasta
+Ecoli.ACP.fasta
+TypeI.ACP.fasta
+
+KR.C9.6.fasta
+KR.nonC9.6.fasta
+TypeI.KR.fasta
+FabG.fasta
+
+AT.7.fasta
+TypeI.AT.fasta
+FabD.fasta
+
+KSIII.10.fasta
+TypeIII.KS.fasta
+FabH.fasta
+
+CyclaseABD.3.fasta
+CyclaseSRPBCC.17.fasta
+Cyclase.3.fasta
+Cyclase_polyket.6.fasta
+
+5.2. Run make hmmsearch
+    creates HMM.hmmsearch.FastaTestSets/
+            HMM.hmmsearch.FastaTestSets.parse/
+
+5.3. Run selectCutoff.R to choose the HMM cutoff for KS and CLF
+
+
+*******************************************************************************
+III. pHMM_search STEP
+
+All files stored in TypeIIPKS/pHMM_search/ folder
+
+11. Run hmmer using the selected HMM and score threshold:
+
+Run make all:
+             run hmmsearch using the domain-specific hmms against the blast results
+             parse hmm results
+             filter results according to the selected hmmsearch score cutoff
+             run cdhit to eliminate 99% identical sequences
+
+    creates t2[domain].[hmm model].hmmsearch
+            t2[domain].[hmm model].hmmsearch.parsed
+            t2[domain].[hmm model].hmmsearch.[cutoff]
+            t2[domain].[hmm model].hmmsearch.parsed.[hmm cutoff].cleanSeq.fasta
+            t2[domain].[hmm model].hmmsearch.parsed.[hmm cutoff].cdhit.99
+            t2[domain].[hmm model].hmmsearch.parsed.[hmm cutoff].cdhit.99.clstr
+
+
+*******************************************************************************
+III. KSCLF_tandem STEP
+
+All files stored in TypeIIPKS/KSCLF_tandem/ folder
+
+Find KS+CLF in tandem, within 2kb of each other, with >1.5kb total span
+(to eliminate those KS/CLF pHMMs matching the same 1kb gene)
+
+Then find partner domains that are within 30kb of KSCLF
+
+Run make all : Runs Makefile for KS, CLF and one partner domain
+modify Makefile to run scripts for all partner domains
+
+1. filter KS+CLF in tandem and Partner domain + KSCLF in tandem
+creates t2ks.selectKnown12.hmm.323.t2clf.selectKnown12.hmm.161.nearby.2000b.totalSpan.1500
+        t2ks.selectKnown12.hmm.323.t2clf.selectKnown12.hmm.161.t2[partner domain].[hmm model].[hmm cutoff].nearby.30000b.totalSpan.0
+
+        t2ks.selectKnown12.hmm.323.t2clf.selectKnown12.hmm.161.nearby.2000b.totalSpan.1500.compareErin
+        t2ks.selectKnown12.hmm.323.t2clf.selectKnown12.hmm.161.t2[partner domain].[hmm model].[hmm cutoff].nearby.30000b.totalSpan.0.compareErin
+
+2. Separate KS, CLF, and partner tab-delimited sequence files and Make fasta file of KS, CLF, and partner seqs
+
+creates t2ks.selectKnown12.hmm.hmmsearch.parsed.323.withTandemCLF
+        t2ks.selectKnown12.hmm.hmmsearch.parsed.323.withTandemCLF.fasta
+        t2clf.selectKnown12.hmm.hmmsearch.parsed.161.withTandemKS
+        t2clf.selectKnown12.hmm.hmmsearch.parsed.161.withTandemKS.fasta
+        t2[partner domain].[hmm model].hmmsearch.parsed.[hmm cutoff].withTandemKS
+        t2[partner domain].[hmm model].hmmsearch.parsed.[hmm cutoff].withTandemKS.fasta
+
+3. Clean sequences to remove dashes.
+   Eliminate identical KS/CLF/partner domains from this set
+
+cdhit_cutoff_clf = .87 for CLF
+cdhit_cutoff_ks = 0.93 for KS
+cdhit_cutoff_partner = 0.93 for partner domains
+
+creates t2ks.selectKnown12.hmm.hmmsearch.parsed.323.withTandemCLF.cleanSeq.fasta
+        t2ks.selectKnown12.hmm.hmmsearch.parsed.323.withTandemCLF.cdhit.93.clstr
+        t2ks.selectKnown12.hmm.hmmsearch.parsed.323.withTandemCLF.cdhit.93
+        t2ks.selectKnown12.hmm.hmmsearch.parsed.323.withTandemCLF.cdhit.93.withrefseqs
+
+        t2clf.selectKnown12.hmm.hmmsearch.parsed.161.withTandemKS.cleanSeq.fasta
+        t2clf.selectKnown12.hmm.hmmsearch.parsed.161.withTandemKS.cdhit.87.clstr
+        t2clf.selectKnown12.hmm.hmmsearch.parsed.161.withTandemKS.cdhit.87
+        t2clf.selectKnown12.hmm.hmmsearch.parsed.161.withTandemKS.cdhit.87.withrefseqs
+
+        t2[partner domain].[hmm model].hmmsearch.parsed.[hmm cutoff].withTandemKSCLF.cleanSeq.fasta
+        t2[partner domain].[hmm model].hmmsearch.parsed.[hmm cutoff].withTandemKSCLF.cdhit.99
+        t2[partner domain].[hmm model].hmmsearch.parsed.[hmm cutoff].withTandemKSCLF.cdhit.99.withrefseqs
+        t2[partner domain].[hmm model].hmmsearch.parsed.[hmm cutoff].withTandemKSCLF.cdhit.99.withrefseqs.cdhit.93
+        t2[partner domain].[hmm model].hmmsearch.parsed.[hmm cutoff].withTandemKSCLF.cdhit.99.withrefseqs.cdhit.93.withrefseqs
+
+4. Add roots for phylogenetic trees
+
+creates t2ks.selectKnown12.hmm.hmmsearch.parsed.323.withTandemCLF.cdhit.93.withrefseqs.withFabF
+        t2clf.selectKnown12.hmm.hmmsearch.parsed.161.withTandemKS.cdhit.87.withrefseqs.withFabF
+        t2[partner domain].[hmm model].hmmsearch.parsed.[hmm cutoff].withTandemKSCLF.cdhit.99.withrefseqs.cdhit.93.withrefseqs.with[partner root]
+
+*******************************************************************************
+IV. Phylogeny STEP
+
+All output files stored in TypeIIPKS/KSCLF_tandem/ folder
+
+Run ./fastree.py : Run mafft and fasttree to make phylogenetic trees for all domains
+
+creates: t2[domain].[hmm model].hmmsearch.parsed.[hmm cutoff].withTandem[KS/CLF/KSCLF].cdhit.[cdhit cutoff].withrefseqs.with[root].mafft
+         t2[domain].[hmm model].hmmsearch.parsed.[hmm cutoff].withTandem[KS/CLF/KSCLF].cdhit.[cdhit cutoff].withrefseqs.with[root].mafft.Fasttee

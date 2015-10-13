@@ -1,0 +1,75 @@
+# First do MSA of desired sequences in mega.
+# Export MSA in fasta format
+# Then build HMMs here
+
+
+##########################################
+# Test hmms for comparing
+
+# 67 minus 7 in the test set
+muscle -in Manual/t2ks.antismash.Erin.5000.nospace.Minus7.fasta -out t2ks.antismash.Erin.5000.nospace.Minus7.fas -maxiters 100;
+hmmbuild -n t2ks --amino t2ks.antismash.Erin.5000.nospace.Minus7.hmm t2ks.antismash.Erin.5000.nospace.Minus7.fas
+
+# C16 only
+muscle -in Manual/t2clf.C16.fasta -out t2clf.C16.fas -maxiters 100;
+hmmbuild -n t2clf --amino t2clf.C16.hmm t2clf.C16.fas
+muscle -in Manual/t2ks.C16.fasta -out t2ks.C16.fas -maxiters 100;
+hmmbuild -n t2ks --amino t2ks.C16.hmm t2ks.C16.fas
+
+# C28 only
+muscle -in Manual/t2clf.C28.fasta -out t2clf.C28.fas -maxiters 100;
+hmmbuild -n t2clf --amino t2clf.C28.hmm t2clf.C28.fas
+muscle -in Manual/t2ks.C28.fasta -out t2ks.C28.fas -maxiters 100;
+hmmbuild -n t2ks --amino t2ks.C28.hmm t2ks.C28.fas
+
+
+# selectKnown12:  diverse set of 12 KS/CLFs
+
+muscle -in t2clf.selectKnown12.fasta -out t2clf.selectKnown12.fas -maxiters 100;
+muscle -in t2ks.selectKnown12.fasta -out t2ks.selectKnown12.fas -maxiters 100;
+hmmbuild -n t2clf --amino t2clf.selectKnown12.hmm t2clf.selectKnown12.fas
+hmmbuild -n t2ks --amino t2ks.selectKnown12.hmm t2ks.selectKnown12.fas
+# Copy those to antismash dir
+# ~/antismash.v2/antismash/generic_modules/hmm_detection/
+cp t2clf.selectKnown12.hmm ~/antismash.v2/antismash/generic_modules/hmm_detection/t2clf.hmm
+cp t2ks.selectKnown12.hmm ~/antismash.v2/antismash/generic_modules/hmm_detection/t2ks.hmm
+
+
+###########################################
+#March 23 2015
+# Make ACP HMM from 12 diverse ACPs:
+muscle -in t2ACP.selectKnown12.fasta -out t2ACP.selectKnown12.fas -maxiters 100;
+hmmbuild -n t2acp --amino t2acp.selectKnown12.hmm t2acp.selectKnown12.fas;
+
+
+#April 28 2015
+# Make KSIII HMM from 10 diverse KSIIIs:
+muscle -in KSIII.10.fa -out t2ksiii.selectKnown10.fas -maxiters 100;
+hmmbuild -n t2ksiii --amino t2ksiii.selectKnown10.hmm t2ksiii.selectKnown10.fas
+
+
+#April 30 2015
+#Make Cyclase HMM from diverse Cyclases:
+muscle -in CyclaseABD.fasta -out CyclaseABD.fasta.3.fas -maxiters 100
+hmmbuild -n t2cyclaseABD --amino cyclaseABD.selectKnown3.hmm CyclaseABD.fasta.3.fas
+
+muscle -in CyclaseSRPBCC.fasta -out CyclaseSRPBCC.fasta.10.fas -maxiters 100
+hmmbuild -n t2cyclaseSRPBCC --amino cyclaseSRPBCCselectknown10.hmm CyclaseSRPBCC.fasta.10.fas
+
+muscle -in Cyclase.fasta -out Cyclase.fasta.3.fas -maxiters 100
+hmmbuild -n t2cyclase --amino cyclase.selectKnown3.hmm Cyclase.fasta.3.fas
+
+muscle -in Cyclase_polyket.fasta -out Cyclase_polyket.fasta.6.fas -maxiters 100
+hmmbuild -n t2cyclase_polyket --amino cyclase_polyket.selectKnown6.hmm Cyclase_polyket.fasta.6.fas
+
+
+#May 1 2015
+gvandova@maguro:~/TypeIIPKS/pHMM_train/HMM$ mv cyclaseABD.selectKnown3.hmm t2cyclaseABD.selectKnown3.hmm
+gvandova@maguro:~/TypeIIPKS/pHMM_train/HMM$ mv cyclaseSRPBCCselectknown10.hmm t2cyclaseSRPBCC.selectknown10.hmm
+gvandova@maguro:~/TypeIIPKS/pHMM_train/HMM$ mv cyclase.selectKnown3.hmm t2cyclase.selectKnown3.hmm
+gvandova@maguro:~/TypeIIPKS/pHMM_train/HMM$ mv cyclase_polyket.selectKnown6.hmm t2cyclase_polyket.selectKnown6.hmm
+
+
+#May 13 2015
+muscle -in CyclaseSRPBCC.fasta -out CyclaseSRPBCC.fasta.17.fas -maxiters 100
+hmmbuild -n t2cyclaseSRPBCC --amino t2cyclaseSRPBCC.selectKnown17.hmm CyclaseSRPBCC.fasta.17.fas
